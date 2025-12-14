@@ -11,7 +11,7 @@ import numpy as np
 from openai import OpenAI
 import os
 
- =============================================================================
+# =============================================================================
 # 공통: max_tokens 안전 캡
 # =============================================================================
 def calc_max_tokens(batch_len: int, tokens_per_line: int = 160, cap: int = 12000) -> int:
@@ -994,4 +994,5 @@ if run_button:
         file_name=full_path_valid,
         mime="text/csv",
     )
+
 
