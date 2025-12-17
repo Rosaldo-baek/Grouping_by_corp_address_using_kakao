@@ -4,6 +4,7 @@ import time
 import requests
 import re
 import json
+import io
 
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.metrics.pairwise import haversine_distances
@@ -968,31 +969,38 @@ if run_button:
     # ------------------------------------------------
     # 파일 저장(고정 파일명)
     # ------------------------------------------------
-    full_path_all = "그룹핑_최종완료_전체.csv"
-    full_path_valid = f"그룹핑_최종완료_{min_group_size}개이상.csv"
+    full_path_all = "그룹핑_최종완료_전체.xlsx"
+    full_path_valid = f"그룹핑_최종완료_{min_group_size}개이상.xlsx"
 
     try:
-        labeled_df.to_csv(full_path_all, encoding="euc-kr", index=False)
-        labeled_df_sec.to_csv(full_path_valid, encoding="euc-kr", index=False)
+        # 로컬 저장(엑셀)
+        labeled_df.to_excel(full_path_all, index=False, engine="openpyxl")
+        labeled_df_sec.to_excel(full_path_valid, index=False, engine="openpyxl")
         st.info(f"로컬 저장:\n- {full_path_all}\n- {full_path_valid}")
     except Exception as e:
         st.warning(f"로컬 저장 오류(다운로드는 가능): {e}")
 
-    all_csv_bytes = labeled_df.to_csv(index=False, encoding="euc-kr").encode("euc-kr", errors="ignore")
-    valid_csv_bytes = labeled_df_sec.to_csv(index=False, encoding="euc-kr").encode("euc-kr", errors="ignore")
+    all_xlsx_buffer = io.BytesIO()
+    with pd.ExcelWriter(all_xlsx_buffer, engine="openpyxl") as writer:
+        labeled_df.to_excel(writer, index=False, sheet_name="전체")
+    all_xlsx_bytes = all_xlsx_buffer.getvalue()
+
+    valid_xlsx_buffer = io.BytesIO()
+    with pd.ExcelWriter(valid_xlsx_buffer, engine="openpyxl") as writer:
+        labeled_df_sec.to_excel(writer, index=False, sheet_name=f"{min_group_size}개이상")
+    valid_xlsx_bytes = valid_xlsx_buffer.getvalue()
 
     st.download_button(
-        label="전체 결과 다운로드",
-        data=all_csv_bytes,
+        label="전체 결과 다운로드 (Excel)",
+        data=all_xlsx_bytes,
         file_name=full_path_all,
-        mime="text/csv",
-    )
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",)
 
     st.download_button(
-        label=f"최소 {min_group_size}건 이상 집단 결과 다운로드",
-        data=valid_csv_bytes,
+        label=f"최소 {min_group_size}건 이상 집단 결과 다운로드 (Excel)",
+        data=valid_xlsx_bytes,
         file_name=full_path_valid,
-        mime="text/csv",
-    )
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",)
+
 
 
